@@ -24,8 +24,8 @@ class GenerationRepository {
   async create(generation) {
     await db.execute(
       `INSERT INTO generations
-        (id, effect_id, effect_name, input_image_url, result_image_url, provider, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (id, effect_id, effect_name, input_image_url, result_image_url, provider)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         generation.id,
         generation.effectId,
@@ -33,11 +33,14 @@ class GenerationRepository {
         generation.inputImageUrl,
         generation.resultImageUrl,
         generation.provider,
-        generation.createdAt,
       ]
     );
 
-    return generation;
+    const [rows] = await db.execute("SELECT * FROM generations WHERE id = ? LIMIT 1", [
+      generation.id,
+    ]);
+
+    return mapGeneration(rows[0]);
   }
 }
 

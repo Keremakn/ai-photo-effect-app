@@ -30,7 +30,7 @@ final class GenerationAPIService: GenerationAPIServiceProtocol {
         )
 
         let (data, response) = try await session.data(for: request)
-        try validate(response)
+        try validate(response, data: data)
 
         let apiResponse = try JSONDecoder().decode(APIResponse<GenerateResult>.self, from: data)
         guard apiResponse.success, let result = apiResponse.data else {
@@ -58,9 +58,14 @@ final class GenerationAPIService: GenerationAPIServiceProtocol {
         return body
     }
 
-    private func validate(_ response: URLResponse) throws {
+    private func validate(_ response: URLResponse, data: Data) throws {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
+            if let apiResponse = try? JSONDecoder().decode(APIResponse<GenerateResult>.self, from: data),
+               let message = apiResponse.message {
+                throw APIError.serverMessage(message)
+            }
+
             throw APIError.invalidResponse
         }
     }
