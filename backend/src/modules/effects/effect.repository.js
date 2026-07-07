@@ -1,70 +1,106 @@
-const effects = [
-  {
-    id: "cartoon",
-    name: "Cartoon",
-    description: "Cartoon style effect",
-    prompt: "Transform this photo into a clean cartoon style.",
-    isActive: true,
-  },
-  {
-    id: "anime",
-    name: "Anime",
-    description: "Anime style effect",
-    prompt: "Transform this photo into anime style.",
-    isActive: true,
-  },
-  {
-    id: "cinematic",
-    name: "Cinematic",
-    description: "Cinematic color grade",
-    prompt: "Transform this photo with a cinematic film color grade.",
-    isActive: true,
-  },
-];
+const db = require("../../config/database");
+
+function mapEffect(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    prompt: row.prompt,
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 class EffectRepository {
-  findActive() {
-    return effects.filter((effect) => effect.isActive);
+  async findActive() {
+    const [rows] = await db.execute(
+      "SELECT * FROM effects WHERE is_active = 1 ORDER BY created_at ASC"
+    );
+
+    return rows.map(mapEffect);
   }
 
-  findAll() {
-    return effects;
+  async findAll() {
+    const [rows] = await db.execute("SELECT * FROM effects ORDER BY created_at ASC");
+    return rows.map(mapEffect);
   }
 
-  findById(id) {
-    return effects.find((effect) => effect.id === id);
+  async findById(id) {
+    const [rows] = await db.execute("SELECT * FROM effects WHERE id = ? LIMIT 1", [id]);
+    return mapEffect(rows[0]);
   }
 
-  create(effect) {
-    effects.push(effect);
-    return effect;
+  async create(effect) {
+    await db.execute(
+      `INSERT INTO effects (id, name, description, prompt, is_active)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        effect.id,
+        effect.name,
+        effect.description,
+        effect.prompt,
+        effect.isActive ? 1 : 0,
+      ]
+    );
+
+    return this.findById(effect.id);
   }
 
-  update(id, payload) {
-    const effect = this.findById(id);
+  async update(id, payload) {
+    const fields = [];
+    const values = [];
+
+    if (payload.name !== undefined) {
+      fields.push("name = ?");
+      values.push(payload.name);
+    }
+
+    if (payload.description !== undefined) {
+      fields.push("description = ?");
+      values.push(payload.description);
+    }
+
+    if (payload.prompt !== undefined) {
+      fields.push("prompt = ?");
+      values.push(payload.prompt);
+    }
+
+    if (payload.isActive !== undefined) {
+      fields.push("is_active = ?");
+      values.push(payload.isActive ? 1 : 0);
+    }
+
+    if (fields.length === 0) {
+      return this.findById(id);
+    }
+
+    values.push(id);
+    const [result] = await db.execute(
+      `UPDATE effects SET ${fields.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    if (result.affectedRows === 0) {
+      return null;
+    }
+
+    return this.findById(id);
+  }
+
+  async delete(id) {
+    const effect = await this.findById(id);
 
     if (!effect) {
       return null;
     }
 
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined) {
-        effect[key] = value;
-      }
-    });
-
+    await db.execute("DELETE FROM effects WHERE id = ?", [id]);
     return effect;
-  }
-
-  delete(id) {
-    const index = effects.findIndex((effect) => effect.id === id);
-
-    if (index === -1) {
-      return null;
-    }
-
-    const [deletedEffect] = effects.splice(index, 1);
-    return deletedEffect;
   }
 }
 

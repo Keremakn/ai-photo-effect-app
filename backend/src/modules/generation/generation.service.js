@@ -8,7 +8,7 @@ class GenerationService {
     this.storageProvider = storageProvider;
   }
 
-  getGenerations() {
+  async getGenerations() {
     return this.generationRepository.findAll();
   }
 
@@ -25,7 +25,7 @@ class GenerationService {
       throw error;
     }
 
-    const effect = this.effectRepository.findById(effectId);
+    const effect = await this.effectRepository.findById(effectId);
 
     if (!effect || !effect.isActive) {
       const error = new Error("Effect not found.");
@@ -42,7 +42,7 @@ class GenerationService {
       effect,
     });
 
-    const generation = this.generationRepository.create({
+    const generation = await this.generationRepository.create({
       id: randomUUID(),
       effectId: effect.id,
       effectName: effect.name,

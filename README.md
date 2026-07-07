@@ -11,6 +11,7 @@ AI Photo Effect App, iOS üzerinden seçilen bir fotoğrafı yapay zeka destekli
 Bu repo şu anda çalışan bir MVP omurgasına sahiptir:
 
 - Backend Node.js + Express ile çalışır.
+- Efektler ve generate geçmişi MySQL üzerinde kalıcı olarak saklanır.
 - Fotoğraf yükleme için Multer kullanılır.
 - AI provider soyutlanmıştır.
 - Mock AI provider mevcuttur.
@@ -25,6 +26,7 @@ ai-photo-effect-app
 ├── backend
 │   ├── src
 │   │   ├── config
+│   │   ├── database
 │   │   ├── middlewares
 │   │   ├── modules
 │   │   │   ├── effects
@@ -78,6 +80,7 @@ cp .env.example .env
 Geliştirme sunucusunu başlat:
 
 ```bash
+npm run db:setup
 npm run dev
 ```
 
@@ -111,6 +114,37 @@ REPLICATE_INPUT_IMAGE_FIELD=input_image
 ```
 
 > Not: `.env` dosyası GitHub'a yüklenmez. Token ve gizli bilgiler sadece lokal makinede tutulmalıdır.
+
+### MySQL Ayarları
+
+Backend, efektleri ve generate geçmişini MySQL'de saklar. Lokal geliştirmede Homebrew MySQL socket üzerinden çalışıyorsa `DB_SOCKET_PATH` kullanılabilir.
+
+TCP bağlantı örneği:
+
+```env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_SOCKET_PATH=
+DB_USER=root
+DB_PASSWORD=buraya_mysql_sifren
+DB_NAME=ai_photo_effect_app
+```
+
+Socket bağlantı örneği:
+
+```env
+DB_SOCKET_PATH=/tmp/mysql.sock
+DB_USER=root
+DB_PASSWORD=buraya_mysql_sifren
+DB_NAME=ai_photo_effect_app
+```
+
+Database, tablolar ve başlangıç efektleri için:
+
+```bash
+cd backend
+npm run db:setup
+```
 
 ## iOS App
 
@@ -172,12 +206,10 @@ Planlanan admin panel özellikleri:
 
 ## Sonraki Geliştirme Adımları
 
-1. Backend'de memory array yerine SQLite veya JSON tabanlı kalıcı veri saklama.
-2. Efekt ve promptların admin panelden yönetilmesi.
-3. Generate geçmişinin kalıcı saklanması.
-4. Daha kaliteli efekt presetleri ve promptların eklenmesi.
-5. Backend deployment: Render veya Railway.
-6. Admin panel deployment: Vercel.
+1. Efekt ve promptların admin panelden yönetilmesi.
+2. Daha kaliteli efekt presetleri ve promptların eklenmesi.
+3. Backend deployment: Render veya Railway.
+4. Admin panel deployment: Vercel.
 
 ## Güvenlik Notları
 
@@ -192,6 +224,7 @@ Backend:
 ```bash
 cd backend
 npm install
+npm run db:setup
 npm run dev
 ```
 
@@ -202,4 +235,3 @@ ios-app/ai-photo-effect-app/ai-photo-effect-app.xcodeproj
 ```
 
 Xcode ile açıp simülatör veya gerçek cihazda çalıştır.
-

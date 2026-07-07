@@ -5,20 +5,21 @@ class EffectService {
     this.effectRepository = effectRepository;
   }
 
-  getActiveEffects() {
-    return this.effectRepository.findActive().map(this.toPublicEffect);
+  async getActiveEffects() {
+    const effects = await this.effectRepository.findActive();
+    return effects.map(this.toPublicEffect);
   }
 
-  getAllEffects() {
+  async getAllEffects() {
     return this.effectRepository.findAll();
   }
 
-  createEffect(payload) {
+  async createEffect(payload) {
     this.validateEffectPayload(payload);
 
     const id = payload.id || randomUUID();
 
-    if (this.effectRepository.findById(id)) {
+    if (await this.effectRepository.findById(id)) {
       const error = new Error("Effect id already exists.");
       error.statusCode = 409;
       throw error;
@@ -33,8 +34,8 @@ class EffectService {
     });
   }
 
-  updateEffect(id, payload) {
-    const updatedEffect = this.effectRepository.update(id, {
+  async updateEffect(id, payload) {
+    const updatedEffect = await this.effectRepository.update(id, {
       name: payload.name,
       description: payload.description,
       prompt: payload.prompt,
@@ -50,8 +51,8 @@ class EffectService {
     return updatedEffect;
   }
 
-  deleteEffect(id) {
-    const deletedEffect = this.effectRepository.delete(id);
+  async deleteEffect(id) {
+    const deletedEffect = await this.effectRepository.delete(id);
 
     if (!deletedEffect) {
       const error = new Error("Effect not found.");

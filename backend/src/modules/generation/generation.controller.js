@@ -3,11 +3,11 @@ class GenerationController {
     this.generationService = generationService;
   }
 
-  getGenerations = (req, res, next) => {
+  getGenerations = async (req, res, next) => {
     try {
       res.json({
         success: true,
-        data: this.generationService.getGenerations(),
+        data: await this.generationService.getGenerations(),
       });
     } catch (error) {
       next(error);
