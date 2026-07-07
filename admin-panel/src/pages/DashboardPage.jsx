@@ -1,8 +1,25 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Activity, Database, ToggleRight } from 'lucide-react';
+import { getAdminEffects } from '../api/effectApi.js';
 
-export default function DashboardPage({ effects }) {
-  const activeCount = effects.filter((effect) => effect.isActive).length;
-  const inactiveCount = Math.max(effects.length - activeCount, 0);
+export default function DashboardPage() {
+  const [effects, setEffects] = useState([]);
+
+  useEffect(() => {
+    getAdminEffects()
+      .then(setEffects)
+      .catch(() => setEffects([]));
+  }, []);
+
+  const stats = useMemo(() => {
+    const active = effects.filter((effect) => effect.isActive).length;
+
+    return {
+      total: effects.length,
+      active,
+      inactive: Math.max(effects.length - active, 0),
+    };
+  }, [effects]);
 
   return (
     <section className="page-section">
@@ -14,9 +31,9 @@ export default function DashboardPage({ effects }) {
       </header>
 
       <div className="metric-grid">
-        <Metric icon={Database} label="Toplam Efekt" value={effects.length} />
-        <Metric icon={ToggleRight} label="Aktif Efekt" value={activeCount} />
-        <Metric icon={Activity} label="Pasif Efekt" value={inactiveCount} />
+        <Metric icon={Database} label="Toplam Efekt" value={stats.total} />
+        <Metric icon={ToggleRight} label="Aktif Efekt" value={stats.active} />
+        <Metric icon={Activity} label="Pasif Efekt" value={stats.inactive} />
       </div>
     </section>
   );

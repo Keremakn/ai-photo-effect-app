@@ -17,7 +17,7 @@ const emptyForm = {
   isActive: true,
 };
 
-export default function EffectsPage({ onEffectsChange }) {
+export default function EffectsPage() {
   const [effects, setEffects] = useState([]);
   const [selectedEffect, setSelectedEffect] = useState(null);
   const [formState, setFormState] = useState(emptyForm);
@@ -44,13 +44,12 @@ export default function EffectsPage({ onEffectsChange }) {
     try {
       const data = await getAdminEffects();
       setEffects(data);
-      onEffectsChange(data);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setIsLoading(false);
     }
-  }, [onEffectsChange]);
+  }, []);
 
   useEffect(() => {
     loadEffects();

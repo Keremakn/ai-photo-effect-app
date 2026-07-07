@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Images, LayoutDashboard, Sparkles } from 'lucide-react';
 import DashboardPage from './pages/DashboardPage.jsx';
 import EffectsPage from './pages/EffectsPage.jsx';
@@ -10,15 +10,6 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('effects');
-  const [effectsSnapshot, setEffectsSnapshot] = useState([]);
-
-  const activePage = useMemo(() => {
-    if (activeTab === 'dashboard') {
-      return <DashboardPage effects={effectsSnapshot} />;
-    }
-
-    return <EffectsPage onEffectsChange={setEffectsSnapshot} />;
-  }, [activeTab, effectsSnapshot]);
 
   return (
     <div className="app-shell">
@@ -54,7 +45,9 @@ export default function App() {
         </nav>
       </aside>
 
-      <main className="main-area">{activePage}</main>
+      <main className="main-area">
+        {activeTab === 'dashboard' ? <DashboardPage /> : <EffectsPage />}
+      </main>
     </div>
   );
 }
