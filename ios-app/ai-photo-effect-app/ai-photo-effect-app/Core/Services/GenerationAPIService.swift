@@ -4,6 +4,7 @@ import UIKit
 protocol GenerationAPIServiceProtocol {
     func generate(image: UIImage, effectId: String) async throws -> GenerateResult
     func fetchMyGenerations() async throws -> [GenerationHistoryItem]
+    func setFavorite(generationId: String, isFavorite: Bool) async throws
 }
 
 final class GenerationAPIService: GenerationAPIServiceProtocol {
@@ -60,12 +61,25 @@ final class GenerationAPIService: GenerationAPIServiceProtocol {
         let (data, response) = try await session.data(for: request)
         try validate(response, data: data)
 
-        let apiResponse = try JSONDecoder().decode(APIResponse<[GenerationHistoryItem]>.self, from: data)
-        guard apiResponse.success, let generations = apiResponse.data else {
+        let apiResponse = try JSONDecoder().decode(APIResponse<PaginatedResponse<GenerationHistoryItem>>.self, from: data)
+        guard apiResponse.success, let payload = apiResponse.data else {
             throw APIError.serverMessage(apiResponse.message ?? "Generation history could not be loaded.")
         }
 
-        return generations
+        return payload.items
+    }
+
+    func setFavorite(generationId: String, isFavorite: Bool) async throws {
+        var request = URLRequest(url: baseURL.appending(path: "api/generations/\(generationId)/favorite"))
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = tokenProvider() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONEncoder().encode(FavoritePayload(isFavorite: isFavorite))
+
+        let (data, response) = try await session.data(for: request)
+        try validate(response, data: data)
     }
 
     private func makeMultipartBody(boundary: String, imageData: Data, effectId: String) -> Data {
@@ -97,6 +111,10 @@ final class GenerationAPIService: GenerationAPIServiceProtocol {
             throw APIError.invalidResponse
         }
     }
+}
+
+private struct FavoritePayload: Encodable {
+    let isFavorite: Bool
 }
 
 private extension Data {

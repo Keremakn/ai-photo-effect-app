@@ -84,20 +84,47 @@ class AuthService {
     return users.map(this.toSafeUser);
   }
 
-  async updateUserRole(id, role) {
+  async updateUserRole(id, role, changedBy = null) {
     const allowedRoles = new Set(["user", "admin"]);
 
     if (!allowedRoles.has(role)) {
       throw new ApiError(400, "Role must be user or admin.");
     }
 
+    const existingUser = await this.authRepository.findById(id);
+
+    if (!existingUser) {
+      throw new ApiError(404, "User not found.");
+    }
+
+    if (existingUser.role === role) {
+      return this.toSafeUser(existingUser);
+    }
+
     const user = await this.authRepository.updateRole(id, role);
+
+    await this.authRepository.createRoleHistory({
+      id: randomUUID(),
+      userId: id,
+      previousRole: existingUser.role,
+      nextRole: role,
+      changedBy: changedBy?.id,
+    });
+
+    return this.toSafeUser(user);
+  }
+
+  async getUserDetail(id) {
+    const user = await this.authRepository.findById(id);
 
     if (!user) {
       throw new ApiError(404, "User not found.");
     }
 
-    return this.toSafeUser(user);
+    return {
+      user: this.toSafeUser(user),
+      roleHistory: await this.authRepository.findRoleHistory(id),
+    };
   }
 
   toSafeUser(user) {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpDown, Search } from 'lucide-react';
-import { getAdminUsers, updateAdminUserRole } from '../api/adminApi.js';
+import { getAdminUserDetail, getAdminUserGenerations, getAdminUsers, updateAdminUserRole } from '../api/adminApi.js';
 import { getApiErrorMessage } from '../api/apiClient.js';
 
 export default function UsersPage() {
@@ -8,6 +8,9 @@ export default function UsersPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [updatingUserId, setUpdatingUserId] = useState('');
+  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [selectedGenerations, setSelectedGenerations] = useState([]);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
@@ -53,11 +56,32 @@ export default function UsersPage() {
       setUsers((currentUsers) => currentUsers.map((currentUser) => (
         currentUser.id === updatedUser.id ? updatedUser : currentUser
       )));
+      if (selectedDetail?.user.id === updatedUser.id) {
+        await loadUserDetail(updatedUser.id);
+      }
       setNotice(`${updatedUser.email} rolü ${updatedUser.role} olarak güncellendi.`);
     } catch (requestError) {
       setError(getApiErrorMessage(requestError));
     } finally {
       setUpdatingUserId('');
+    }
+  }
+
+  async function loadUserDetail(id) {
+    setIsDetailLoading(true);
+    setError('');
+
+    try {
+      const [detail, generations] = await Promise.all([
+        getAdminUserDetail(id),
+        getAdminUserGenerations(id, { page: 1, limit: 100 }),
+      ]);
+      setSelectedDetail(detail);
+      setSelectedGenerations(generations.items || []);
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError));
+    } finally {
+      setIsDetailLoading(false);
     }
   }
 
@@ -112,7 +136,11 @@ export default function UsersPage() {
               )}
               {!isLoading && visibleUsers.map((user) => (
                 <tr key={user.id}>
-                  <td><strong>{user.email}</strong></td>
+                  <td>
+                    <button className="link-button" type="button" onClick={() => loadUserDetail(user.id)}>
+                      <strong>{user.email}</strong>
+                    </button>
+                  </td>
                   <td><span className={user.role === 'admin' ? 'status active' : 'status inactive'}>{user.role}</span></td>
                   <td>{formatDate(user.createdAt)}</td>
                   <td>
@@ -132,6 +160,49 @@ export default function UsersPage() {
           </table>
         </div>
       </div>
+
+      {(selectedDetail || isDetailLoading) && (
+        <div className="panel detail-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Kullanıcı Detayı</h2>
+              <p>{isDetailLoading ? 'Yükleniyor' : selectedDetail.user.email}</p>
+            </div>
+          </div>
+          {isDetailLoading ? (
+            <div className="empty-cell">Yükleniyor...</div>
+          ) : (
+            <div className="detail-grid">
+              <div>
+                <h3>Profil</h3>
+                <p><strong>Email:</strong> {selectedDetail.user.email}</p>
+                <p><strong>Rol:</strong> {selectedDetail.user.role}</p>
+                <p><strong>Kayıt:</strong> {formatDate(selectedDetail.user.createdAt)}</p>
+              </div>
+              <div>
+                <h3>Role Geçmişi</h3>
+                {selectedDetail.roleHistory.length === 0 && <p className="muted">Role değişimi yok.</p>}
+                {selectedDetail.roleHistory.map((item) => (
+                  <p key={item.id}>
+                    {item.previousRole} → {item.nextRole}
+                    <span className="muted">{formatDate(item.createdAt)} · {item.changedByEmail || 'system'}</span>
+                  </p>
+                ))}
+              </div>
+              <div>
+                <h3>Üretimler</h3>
+                {selectedGenerations.length === 0 && <p className="muted">Üretim kaydı yok.</p>}
+                {selectedGenerations.map((generation) => (
+                  <p key={generation.id}>
+                    {generation.effectName}
+                    <span className="muted">{formatDate(generation.createdAt)} · {generation.provider}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

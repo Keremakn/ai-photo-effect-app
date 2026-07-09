@@ -4,6 +4,7 @@ struct GenerationHistoryView: View {
     let generations: [GenerationHistoryItem]
     let isLoading: Bool
     let onRefresh: () -> Void
+    let onToggleFavorite: (GenerationHistoryItem) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -37,7 +38,12 @@ struct GenerationHistoryView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(generations) { generation in
-                        GenerationHistoryRow(generation: generation)
+                        GenerationHistoryRow(
+                            generation: generation,
+                            onToggleFavorite: {
+                                onToggleFavorite(generation)
+                            }
+                        )
                     }
                 }
             }
@@ -47,6 +53,7 @@ struct GenerationHistoryView: View {
 
 private struct GenerationHistoryRow: View {
     let generation: GenerationHistoryItem
+    let onToggleFavorite: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -87,6 +94,11 @@ private struct GenerationHistoryRow: View {
                 Link(destination: url) {
                     Image(systemName: "arrow.up.right.square")
                 }
+            }
+
+            Button(action: onToggleFavorite) {
+                Image(systemName: generation.isFavorite == true ? "heart.fill" : "heart")
+                    .foregroundStyle(generation.isFavorite == true ? .red : .secondary)
             }
         }
         .padding(12)

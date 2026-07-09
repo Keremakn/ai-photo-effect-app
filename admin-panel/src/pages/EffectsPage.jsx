@@ -6,6 +6,7 @@ import {
   createEffect,
   deleteEffect,
   getAdminEffects,
+  getEffectPromptVersions,
   updateEffect,
 } from '../api/effectApi.js';
 import { getApiErrorMessage } from '../api/apiClient.js';
@@ -14,6 +15,8 @@ const emptyForm = {
   id: '',
   name: '',
   description: '',
+  category: 'General',
+  tags: '',
   prompt: '',
   isActive: true,
 };
@@ -26,6 +29,7 @@ export default function EffectsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [promptVersions, setPromptVersions] = useState([]);
 
   const isEditing = Boolean(selectedEffect);
 
@@ -61,19 +65,27 @@ export default function EffectsPage() {
     setFormState(emptyForm);
     setNotice('');
     setError('');
+    setPromptVersions([]);
   }
 
-  function startEdit(effect) {
+  async function startEdit(effect) {
     setSelectedEffect(effect);
     setFormState({
       id: effect.id,
       name: effect.name,
       description: effect.description,
+      category: effect.category || 'General',
+      tags: Array.isArray(effect.tags) ? effect.tags.join(', ') : '',
       prompt: effect.prompt,
       isActive: effect.isActive,
     });
     setNotice('');
     setError('');
+    try {
+      setPromptVersions(await getEffectPromptVersions(effect.id));
+    } catch {
+      setPromptVersions([]);
+    }
   }
 
   async function handleSubmit(event) {
@@ -86,6 +98,8 @@ export default function EffectsPage() {
       id: formState.id.trim(),
       name: formState.name.trim(),
       description: formState.description.trim(),
+      category: formState.category.trim() || 'General',
+      tags: formState.tags,
       prompt: formState.prompt.trim(),
       isActive: formState.isActive,
     };
@@ -193,6 +207,26 @@ export default function EffectsPage() {
           onCancel={startCreate}
           onSubmit={handleSubmit}
         />
+
+        {isEditing && (
+          <div className="panel detail-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Prompt Versiyonları</h2>
+                <p>{promptVersions.length} kayıt</p>
+              </div>
+            </div>
+            <div className="version-list">
+              {promptVersions.map((version) => (
+                <div key={version.id} className="version-item">
+                  <strong>{new Date(version.createdAt).toLocaleString('tr-TR')}</strong>
+                  <span className="muted">{version.createdByEmail || 'system'}</span>
+                  <p>{version.prompt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -55,6 +55,24 @@ export default function EffectForm({
       </label>
 
       <label>
+        <span>Kategori</span>
+        <input
+          value={formState.category}
+          onChange={(event) => updateField('category', event.target.value)}
+          placeholder="Illustration"
+        />
+      </label>
+
+      <label>
+        <span>Tagler</span>
+        <input
+          value={formState.tags}
+          onChange={(event) => updateField('tags', event.target.value)}
+          placeholder="anime, portrait, vibrant"
+        />
+      </label>
+
+      <label>
         <span>Prompt</span>
         <textarea
           value={formState.prompt}

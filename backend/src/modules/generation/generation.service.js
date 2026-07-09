@@ -9,12 +9,27 @@ class GenerationService {
     this.storageProvider = storageProvider;
   }
 
-  async getGenerations() {
-    return this.generationRepository.findAll();
+  async getGenerations(pagination) {
+    const [rows, total] = await Promise.all([
+      this.generationRepository.findAll(pagination),
+      this.generationRepository.countAll(),
+    ]);
+
+    return { rows, total };
   }
 
-  async getGenerationsForUser(userId) {
-    return this.generationRepository.findByUserId(userId);
+  async getGenerationsForUser(userId, pagination, filters = {}) {
+    const [rows, total] = await Promise.all([
+      this.generationRepository.findByUserId(userId, {
+        ...pagination,
+        favoritesOnly: filters.favoritesOnly,
+      }),
+      this.generationRepository.countByUserId(userId, {
+        favoritesOnly: filters.favoritesOnly,
+      }),
+    ]);
+
+    return { rows, total };
   }
 
   async generate({ imageFile, effectId, user }) {
@@ -36,6 +51,7 @@ class GenerationService {
       throw new ApiError(403, "Effect is not active.");
     }
 
+    const promptVersion = await this.effectRepository.findLatestPromptVersion(effect.id);
     const inputImageUrl = this.storageProvider.getPublicUrl(imageFile);
     const aiResult = await this.aiProvider.generate({
       imagePath: imageFile.path,
@@ -50,6 +66,8 @@ class GenerationService {
       userId: user?.id || null,
       effectId: effect.id,
       effectName: effect.name,
+      promptVersionId: promptVersion?.id || null,
+      promptText: effect.prompt,
       inputImageUrl,
       resultImageUrl: aiResult.resultImageUrl,
       provider: aiResult.provider,
@@ -57,6 +75,15 @@ class GenerationService {
     });
 
     return generation;
+  }
+
+  async setFavorite(userId, generationId, isFavorite) {
+    await this.generationRepository.setFavorite(userId, generationId, isFavorite);
+    return { generationId, isFavorite };
+  }
+
+  async getDashboardStats() {
+    return this.generationRepository.getDashboardStats();
   }
 }
 

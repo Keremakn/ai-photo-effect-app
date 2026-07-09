@@ -14,15 +14,26 @@ export default function GenerationsPage({
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   useEffect(() => {
     const request = scope === 'admin' ? getAdminGenerations : getMyGenerations;
+    setIsLoading(true);
 
-    request()
-      .then(setGenerations)
+    request({
+      page,
+      limit: 10,
+      ...(scope === 'user' && favoritesOnly ? { favorites: 'true' } : {}),
+    })
+      .then((payload) => {
+        setGenerations(payload.items || payload);
+        setPagination(payload.pagination || { page: 1, limit: 10, total: payload.length || 0, totalPages: 1 });
+      })
       .catch((requestError) => setError(getApiErrorMessage(requestError)))
       .finally(() => setIsLoading(false));
-  }, [scope]);
+  }, [favoritesOnly, page, scope]);
 
   const visibleGenerations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -76,6 +87,18 @@ export default function GenerationsPage({
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
+          {scope === 'user' && (
+            <button
+              className={favoritesOnly ? 'secondary-button active-filter' : 'secondary-button'}
+              type="button"
+              onClick={() => {
+                setFavoritesOnly((current) => !current);
+                setPage(1);
+              }}
+            >
+              Favoriler
+            </button>
+          )}
         </div>
         <div className="table-wrap">
           <table>
@@ -119,6 +142,15 @@ export default function GenerationsPage({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="pagination-row">
+          <button className="secondary-button" type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+            Önceki
+          </button>
+          <span>Sayfa {pagination.page} / {pagination.totalPages} · {pagination.total} kayıt</span>
+          <button className="secondary-button" type="button" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>
+            Sonraki
+          </button>
         </div>
       </div>
     </section>

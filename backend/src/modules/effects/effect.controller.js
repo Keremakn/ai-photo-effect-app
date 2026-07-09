@@ -8,7 +8,14 @@ class EffectController {
   getEffects = asyncHandler(async (req, res) => {
     res.status(200).json({
       success: true,
-      data: await this.effectService.getActiveEffects(),
+      data: await this.effectService.getActiveEffects(req.user),
+    });
+  });
+
+  getFavoriteEffects = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.effectService.getFavoriteEffects(req.user.id),
     });
   });
 
@@ -20,7 +27,7 @@ class EffectController {
   });
 
   createEffect = asyncHandler(async (req, res) => {
-    const effect = await this.effectService.createEffect(req.body);
+    const effect = await this.effectService.createEffect(req.body, req.user);
 
     res.status(201).json({
       success: true,
@@ -29,11 +36,29 @@ class EffectController {
   });
 
   updateEffect = asyncHandler(async (req, res) => {
-    const effect = await this.effectService.updateEffect(req.params.id, req.body);
+    const effect = await this.effectService.updateEffect(req.params.id, req.body, req.user);
 
     res.status(200).json({
       success: true,
       data: effect,
+    });
+  });
+
+  getPromptVersions = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.effectService.getPromptVersions(req.params.id),
+    });
+  });
+
+  setFavorite = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.effectService.setFavorite(
+        req.user.id,
+        req.params.id,
+        req.body.isFavorite !== false
+      ),
     });
   });
 

@@ -40,7 +40,14 @@ class AuthController {
   updateUserRole = asyncHandler(async (req, res) => {
     res.status(200).json({
       success: true,
-      data: await this.authService.updateUserRole(req.params.id, req.body.role),
+      data: await this.authService.updateUserRole(req.params.id, req.body.role, req.user),
+    });
+  });
+
+  getUserDetail = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.authService.getUserDetail(req.params.id),
     });
   });
 }

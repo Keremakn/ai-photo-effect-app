@@ -18,5 +18,18 @@ struct GenerationHistoryItem: Identifiable, Decodable, Equatable {
     let inputImageUrl: String
     let resultImageUrl: String
     let provider: String
+    let isFavorite: Bool?
     let createdAt: String?
+}
+
+struct PaginatedResponse<Item: Decodable>: Decodable {
+    let items: [Item]
+    let pagination: Pagination
+}
+
+struct Pagination: Decodable {
+    let page: Int
+    let limit: Int
+    let total: Int
+    let totalPages: Int
 }

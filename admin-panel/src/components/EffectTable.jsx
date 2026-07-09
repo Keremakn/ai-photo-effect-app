@@ -20,6 +20,8 @@ export default function EffectTable({
         effect.name,
         effect.prompt,
         effect.description,
+        effect.category,
+        Array.isArray(effect.tags) ? effect.tags.join(' ') : '',
         effect.isActive ? 'aktif active' : 'pasif inactive',
       ].join(' ').toLowerCase().includes(normalizedQuery))
       : effects;
@@ -70,6 +72,7 @@ export default function EffectTable({
           <thead>
             <tr>
               <th><SortButton label="Ad" sortKey="name" sortConfig={sortConfig} onSort={handleSort} /></th>
+              <th><SortButton label="Kategori" sortKey="category" sortConfig={sortConfig} onSort={handleSort} /></th>
               <th><SortButton label="Durum" sortKey="isActive" sortConfig={sortConfig} onSort={handleSort} /></th>
               <th><SortButton label="Prompt" sortKey="prompt" sortConfig={sortConfig} onSort={handleSort} /></th>
               <th aria-label="İşlemler"></th>
@@ -78,13 +81,13 @@ export default function EffectTable({
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan="4" className="empty-cell">Yükleniyor</td>
+                <td colSpan="5" className="empty-cell">Yükleniyor</td>
               </tr>
             )}
 
             {!isLoading && visibleEffects.length === 0 && (
               <tr>
-                <td colSpan="4" className="empty-cell">Kayıt yok</td>
+                <td colSpan="5" className="empty-cell">Kayıt yok</td>
               </tr>
             )}
 
@@ -93,7 +96,11 @@ export default function EffectTable({
                 <td>
                   <strong>{effect.name}</strong>
                   <span className="muted">{effect.id}</span>
+                  {Array.isArray(effect.tags) && effect.tags.length > 0 && (
+                    <span className="muted">{effect.tags.join(', ')}</span>
+                  )}
                 </td>
+                <td>{effect.category || 'General'}</td>
                 <td>
                   <button
                     className={effect.isActive ? 'status active' : 'status inactive'}

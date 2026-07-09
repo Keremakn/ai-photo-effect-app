@@ -19,8 +19,11 @@ const generationService = new GenerationService({
 const generationController = new GenerationController(generationService);
 
 router.get("/generations/me", requireAuth, generationController.getMyGenerations);
+router.put("/generations/:id/favorite", requireAuth, generationController.setFavorite);
 router.get("/generations", requireAuth, requireAdmin, generationController.getGenerations);
 router.get("/admin/generations", requireAuth, requireAdmin, generationController.getGenerations);
+router.get("/admin/users/:userId/generations", requireAuth, requireAdmin, generationController.getUserGenerations);
+router.get("/admin/dashboard", requireAuth, requireAdmin, generationController.getDashboardStats);
 router.post("/generate", generateLimiter, optionalAuth, upload.single("image"), generationController.generate);
 
 module.exports = router;

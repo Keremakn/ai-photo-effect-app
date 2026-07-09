@@ -13,6 +13,7 @@ router.post("/auth/login", loginLimiter, authController.login);
 router.post("/auth/register", authController.register);
 router.get("/auth/me", requireAuth, authController.me);
 router.get("/admin/users", requireAuth, requireAdmin, authController.getUsers);
+router.get("/admin/users/:id", requireAuth, requireAdmin, authController.getUserDetail);
 router.put("/admin/users/:id/role", requireAuth, requireAdmin, authController.updateUserRole);
 
 module.exports = router;

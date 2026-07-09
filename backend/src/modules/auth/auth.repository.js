@@ -61,6 +61,37 @@ class AuthRepository {
 
     return this.findById(id);
   }
+
+  async createRoleHistory({ id, userId, previousRole, nextRole, changedBy }) {
+    await db.execute(
+      `INSERT INTO user_role_history (id, user_id, previous_role, next_role, changed_by)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id, userId, previousRole, nextRole, changedBy || null]
+    );
+  }
+
+  async findRoleHistory(userId) {
+    const [rows] = await db.execute(
+      `SELECT
+        user_role_history.*,
+        changed_by_user.email AS changed_by_email
+       FROM user_role_history
+       LEFT JOIN users AS changed_by_user ON changed_by_user.id = user_role_history.changed_by
+       WHERE user_role_history.user_id = ?
+       ORDER BY user_role_history.created_at DESC`,
+      [userId]
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      previousRole: row.previous_role,
+      nextRole: row.next_role,
+      changedBy: row.changed_by,
+      changedByEmail: row.changed_by_email,
+      createdAt: row.created_at,
+    }));
+  }
 }
 
 module.exports = new AuthRepository();

@@ -43,6 +43,9 @@ struct HomeView: View {
                 if viewModel.isAuthenticated && viewModel.effects.isEmpty {
                     await viewModel.loadEffects()
                 }
+                if viewModel.isAuthenticated && viewModel.favoriteEffects.isEmpty {
+                    await viewModel.loadFavoriteEffects()
+                }
                 if viewModel.isAuthenticated && viewModel.generationHistory.isEmpty {
                     await viewModel.loadHistory()
                 }
@@ -76,6 +79,11 @@ struct HomeView: View {
                             Task {
                                 await viewModel.loadHistory()
                             }
+                        },
+                        onToggleFavorite: { generation in
+                            Task {
+                                await viewModel.toggleGenerationFavorite(generation)
+                            }
                         }
                     )
                 }
@@ -86,18 +94,50 @@ struct HomeView: View {
 
     private var generateContent: some View {
         VStack(spacing: 20) {
-            ImagePickerView(
-                image: viewModel.selectedImage,
-                onPickImage: {
+            if let resultImageUrl = viewModel.resultImageUrl {
+                ResultView(
+                    originalImage: viewModel.generatedSourceImage,
+                    resultImageUrl: resultImageUrl,
+                    isSaving: viewModel.isSavingResult,
+                    onSave: {
+                        Task {
+                            await viewModel.saveResultToPhotos()
+                        }
+                    },
+                    onFavorite: {
+                        Task {
+                            await viewModel.favoriteCurrentResult()
+                        }
+                    }
+                )
+
+                Button {
                     isImagePickerPresented = true
+                } label: {
+                    Label("Change Photo", systemImage: "photo")
+                        .frame(maxWidth: .infinity)
                 }
-            )
+                .buttonStyle(.bordered)
+            } else {
+                ImagePickerView(
+                    image: viewModel.selectedImage,
+                    onPickImage: {
+                        isImagePickerPresented = true
+                    }
+                )
+            }
 
             EffectSelectionView(
                 effects: viewModel.effects,
+                favoriteEffects: viewModel.favoriteEffects,
                 selectedEffect: viewModel.selectedEffect,
                 onSelect: { effect in
                     viewModel.selectedEffect = effect
+                },
+                onToggleFavorite: { effect in
+                    Task {
+                        await viewModel.toggleEffectFavorite(effect)
+                    }
                 }
             )
 
@@ -117,17 +157,6 @@ struct HomeView: View {
                 ProcessingView()
             }
 
-            if let resultImageUrl = viewModel.resultImageUrl {
-                ResultView(
-                    resultImageUrl: resultImageUrl,
-                    isSaving: viewModel.isSavingResult,
-                    onSave: {
-                        Task {
-                            await viewModel.saveResultToPhotos()
-                        }
-                    }
-                )
-            }
         }
     }
 

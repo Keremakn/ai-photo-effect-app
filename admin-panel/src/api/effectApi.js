@@ -19,3 +19,8 @@ export async function deleteEffect(id) {
   const response = await apiClient.delete(`/api/admin/effects/${encodeURIComponent(id)}`);
   return response.data.data;
 }
+
+export async function getEffectPromptVersions(id) {
+  const response = await apiClient.get(`/api/admin/effects/${encodeURIComponent(id)}/prompt-versions`);
+  return response.data.data;
+}
