@@ -116,9 +116,90 @@ button:disabled {
   background: rgba(255, 255, 255, 0.09);
 }
 
+.sidebar-footer {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.sidebar-footer > span {
+  overflow: hidden;
+  color: #9da8b3;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .main-area {
   padding: 32px;
   overflow: hidden;
+}
+
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(245, 200, 76, 0.22), transparent 32%),
+    linear-gradient(315deg, rgba(37, 99, 235, 0.16), transparent 36%),
+    var(--bg);
+}
+
+.login-panel,
+.loading-panel {
+  width: min(100%, 420px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.login-panel {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+}
+
+.loading-panel {
+  padding: 24px;
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-brand strong,
+.login-brand span {
+  display: block;
+}
+
+.login-brand span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.login-form label span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .page-section {
@@ -471,6 +552,11 @@ input:disabled {
 
   .nav-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sidebar-footer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    align-items: center;
   }
 
   .main-area {

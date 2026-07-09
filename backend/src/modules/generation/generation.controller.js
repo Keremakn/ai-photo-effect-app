@@ -1,37 +1,31 @@
+const asyncHandler = require("../../utils/asyncHandler");
+
 class GenerationController {
   constructor(generationService) {
     this.generationService = generationService;
   }
 
-  getGenerations = async (req, res, next) => {
-    try {
-      res.json({
-        success: true,
-        data: await this.generationService.getGenerations(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+  getGenerations = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.generationService.getGenerations(),
+    });
+  });
 
-  generate = async (req, res, next) => {
-    try {
-      const generation = await this.generationService.generate({
-        imageFile: req.file,
-        effectId: req.body.effectId,
-      });
+  generate = asyncHandler(async (req, res) => {
+    const generation = await this.generationService.generate({
+      imageFile: req.file,
+      effectId: req.body.effectId,
+    });
 
-      res.json({
-        success: true,
-        data: {
-          resultImageUrl: generation.resultImageUrl,
-          generationId: generation.id,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+    res.status(201).json({
+      success: true,
+      data: {
+        resultImageUrl: generation.resultImageUrl,
+        generationId: generation.id,
+      },
+    });
+  });
 }
 
 module.exports = GenerationController;

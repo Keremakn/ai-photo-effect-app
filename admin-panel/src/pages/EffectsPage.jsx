@@ -8,6 +8,7 @@ import {
   getAdminEffects,
   updateEffect,
 } from '../api/effectApi.js';
+import { getApiErrorMessage } from '../api/apiClient.js';
 
 const emptyForm = {
   id: '',
@@ -45,7 +46,7 @@ export default function EffectsPage() {
       const data = await getAdminEffects();
       setEffects(data);
     } catch (requestError) {
-      setError(requestError.message);
+      setError(getApiErrorMessage(requestError));
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +105,7 @@ export default function EffectsPage() {
         setFormState(emptyForm);
       }
     } catch (requestError) {
-      setError(requestError.message);
+      setError(getApiErrorMessage(requestError));
     } finally {
       setIsSaving(false);
     }
@@ -128,7 +129,7 @@ export default function EffectsPage() {
       }
       await loadEffects();
     } catch (requestError) {
-      setError(requestError.message);
+      setError(getApiErrorMessage(requestError));
     }
   }
 
@@ -140,7 +141,7 @@ export default function EffectsPage() {
       await updateEffect(effect.id, { isActive: !effect.isActive });
       await loadEffects();
     } catch (requestError) {
-      setError(requestError.message);
+      setError(getApiErrorMessage(requestError));
     }
   }
 

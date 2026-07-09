@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const { randomUUID } = require("crypto");
+const ApiError = require("../utils/ApiError");
 
 const uploadDir = path.join(__dirname, "..", "..", "uploads");
 
@@ -24,9 +25,7 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     if (!imageMimeTypes.has(file.mimetype)) {
-      const error = new Error("Only image uploads are allowed.");
-      error.statusCode = 400;
-      cb(error);
+      cb(new ApiError(400, "Only image uploads are allowed."));
       return;
     }
 

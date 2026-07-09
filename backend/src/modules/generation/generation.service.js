@@ -1,4 +1,5 @@
 const { randomUUID } = require("crypto");
+const ApiError = require("../../utils/ApiError");
 
 class GenerationService {
   constructor({ effectRepository, generationRepository, aiProvider, storageProvider }) {
@@ -14,23 +15,21 @@ class GenerationService {
 
   async generate({ imageFile, effectId }) {
     if (!imageFile) {
-      const error = new Error("Image file is required.");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Image file is required.");
     }
 
     if (!effectId) {
-      const error = new Error("effectId is required.");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "effectId is required.");
     }
 
     const effect = await this.effectRepository.findById(effectId);
 
-    if (!effect || !effect.isActive) {
-      const error = new Error("Effect not found.");
-      error.statusCode = 404;
-      throw error;
+    if (!effect) {
+      throw new ApiError(404, "Effect not found.");
+    }
+
+    if (!effect.isActive) {
+      throw new ApiError(403, "Effect is not active.");
     }
 
     const inputImageUrl = this.storageProvider.getPublicUrl(imageFile);

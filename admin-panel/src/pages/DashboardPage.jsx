@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, Database, ToggleRight } from 'lucide-react';
 import { getAdminEffects } from '../api/effectApi.js';
+import { getApiErrorMessage } from '../api/apiClient.js';
 
 export default function DashboardPage() {
   const [effects, setEffects] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getAdminEffects()
       .then(setEffects)
-      .catch(() => setEffects([]));
+      .catch((requestError) => {
+        setEffects([]);
+        setError(getApiErrorMessage(requestError));
+      });
   }, []);
 
   const stats = useMemo(() => {
@@ -29,6 +34,8 @@ export default function DashboardPage() {
           <h1>Panel Durumu</h1>
         </div>
       </header>
+
+      {error && <div className="feedback error">{error}</div>}
 
       <div className="metric-grid">
         <Metric icon={Database} label="Toplam Efekt" value={stats.total} />

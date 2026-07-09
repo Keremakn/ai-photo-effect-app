@@ -2,9 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
+const authRoutes = require("./modules/auth/auth.routes");
 const effectRoutes = require("./modules/effects/effect.routes");
 const generationRoutes = require("./modules/generation/generation.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
+const notFoundMiddleware = require("./middlewares/notFound.middleware");
+const { apiLimiter } = require("./middlewares/rateLimit.middleware");
 
 const app = express();
 
@@ -21,16 +24,12 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api", apiLimiter);
+app.use("/api", authRoutes);
 app.use("/api", effectRoutes);
 app.use("/api", generationRoutes);
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found.",
-  });
-});
-
+app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 module.exports = app;

@@ -19,3 +19,11 @@ CREATE TABLE IF NOT EXISTS generations (
   INDEX idx_generations_created_at (created_at),
   INDEX idx_generations_effect_id (effect_id)
 );
+
+CREATE TABLE IF NOT EXISTS admins (
+  id CHAR(36) PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

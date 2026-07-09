@@ -1,42 +1,21 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+import apiClient from './apiClient.js';
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  });
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.message || 'İstek tamamlanamadı.');
-  }
-
-  return payload.data;
+export async function getAdminEffects() {
+  const response = await apiClient.get('/api/admin/effects');
+  return response.data.data;
 }
 
-export function getAdminEffects() {
-  return request('/api/admin/effects');
+export async function createEffect(effect) {
+  const response = await apiClient.post('/api/admin/effects', effect);
+  return response.data.data;
 }
 
-export function createEffect(effect) {
-  return request('/api/admin/effects', {
-    method: 'POST',
-    body: JSON.stringify(effect),
-  });
+export async function updateEffect(id, effect) {
+  const response = await apiClient.put(`/api/admin/effects/${encodeURIComponent(id)}`, effect);
+  return response.data.data;
 }
 
-export function updateEffect(id, effect) {
-  return request(`/api/admin/effects/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    body: JSON.stringify(effect),
-  });
-}
-
-export function deleteEffect(id) {
-  return request(`/api/admin/effects/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-  });
+export async function deleteEffect(id) {
+  const response = await apiClient.delete(`/api/admin/effects/${encodeURIComponent(id)}`);
+  return response.data.data;
 }

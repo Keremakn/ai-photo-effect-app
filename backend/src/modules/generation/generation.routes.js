@@ -1,5 +1,7 @@
 const express = require("express");
 const upload = require("../../middlewares/upload.middleware");
+const { requireAuth, requireAdmin } = require("../../middlewares/auth.middleware");
+const { generateLimiter } = require("../../middlewares/rateLimit.middleware");
 const createAIProvider = require("../../services/ai/ai.provider");
 const createStorageProvider = require("../../services/storage/storage.provider");
 const effectRepository = require("../effects/effect.repository");
@@ -16,7 +18,7 @@ const generationService = new GenerationService({
 });
 const generationController = new GenerationController(generationService);
 
-router.get("/generations", generationController.getGenerations);
-router.post("/generate", upload.single("image"), generationController.generate);
+router.get("/generations", requireAuth, requireAdmin, generationController.getGenerations);
+router.post("/generate", generateLimiter, upload.single("image"), generationController.generate);
 
 module.exports = router;

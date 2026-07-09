@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const axios = require("axios");
 const env = require("../../config/env");
+const ApiError = require("../../utils/ApiError");
 
 const TERMINAL_STATUSES = new Set(["succeeded", "failed", "canceled"]);
 
@@ -24,9 +25,7 @@ class ReplicateAIProvider {
     const resultImageUrl = this.extractResultImageUrl(completedPrediction.output);
 
     if (!resultImageUrl) {
-      const error = new Error("Replicate did not return an image URL.");
-      error.statusCode = 502;
-      throw error;
+      throw new ApiError(502, "Replicate did not return an image URL.");
     }
 
     return {
@@ -41,9 +40,7 @@ class ReplicateAIProvider {
 
   ensureConfigured() {
     if (!env.replicateApiToken) {
-      const error = new Error("REPLICATE_API_TOKEN is required when AI_PROVIDER=replicate.");
-      error.statusCode = 500;
-      throw error;
+      throw new ApiError(500, "REPLICATE_API_TOKEN is required when AI_PROVIDER=replicate.");
     }
   }
 
@@ -77,9 +74,7 @@ class ReplicateAIProvider {
       }
     }
 
-    const error = new Error("Replicate prediction timed out.");
-    error.statusCode = 504;
-    throw error;
+    throw new ApiError(504, "Replicate prediction timed out.");
   }
 
   async getPrediction(predictionId) {
@@ -95,9 +90,7 @@ class ReplicateAIProvider {
       return prediction;
     }
 
-    const error = new Error(prediction.error || `Replicate prediction ${prediction.status}.`);
-    error.statusCode = 502;
-    throw error;
+    throw new ApiError(502, prediction.error || `Replicate prediction ${prediction.status}.`);
   }
 
   extractResultImageUrl(output) {

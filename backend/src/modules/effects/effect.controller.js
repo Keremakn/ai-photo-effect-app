@@ -1,68 +1,50 @@
+const asyncHandler = require("../../utils/asyncHandler");
+
 class EffectController {
   constructor(effectService) {
     this.effectService = effectService;
   }
 
-  getEffects = async (req, res, next) => {
-    try {
-      res.json({
-        success: true,
-        data: await this.effectService.getActiveEffects(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+  getEffects = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.effectService.getActiveEffects(),
+    });
+  });
 
-  getAdminEffects = async (req, res, next) => {
-    try {
-      res.json({
-        success: true,
-        data: await this.effectService.getAllEffects(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+  getAdminEffects = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: await this.effectService.getAllEffects(),
+    });
+  });
 
-  createEffect = async (req, res, next) => {
-    try {
-      const effect = await this.effectService.createEffect(req.body);
+  createEffect = asyncHandler(async (req, res) => {
+    const effect = await this.effectService.createEffect(req.body);
 
-      res.status(201).json({
-        success: true,
-        data: effect,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+    res.status(201).json({
+      success: true,
+      data: effect,
+    });
+  });
 
-  updateEffect = async (req, res, next) => {
-    try {
-      const effect = await this.effectService.updateEffect(req.params.id, req.body);
+  updateEffect = asyncHandler(async (req, res) => {
+    const effect = await this.effectService.updateEffect(req.params.id, req.body);
 
-      res.json({
-        success: true,
-        data: effect,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+    res.status(200).json({
+      success: true,
+      data: effect,
+    });
+  });
 
-  deleteEffect = async (req, res, next) => {
-    try {
-      const effect = await this.effectService.deleteEffect(req.params.id);
+  deleteEffect = asyncHandler(async (req, res) => {
+    const effect = await this.effectService.deleteEffect(req.params.id);
 
-      res.json({
-        success: true,
-        data: effect,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+    res.status(200).json({
+      success: true,
+      data: effect,
+    });
+  });
 }
 
 module.exports = EffectController;

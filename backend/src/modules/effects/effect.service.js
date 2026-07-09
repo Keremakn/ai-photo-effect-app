@@ -1,4 +1,5 @@
 const { randomUUID } = require("crypto");
+const ApiError = require("../../utils/ApiError");
 
 class EffectService {
   constructor(effectRepository) {
@@ -20,9 +21,7 @@ class EffectService {
     const id = payload.id || randomUUID();
 
     if (await this.effectRepository.findById(id)) {
-      const error = new Error("Effect id already exists.");
-      error.statusCode = 409;
-      throw error;
+      throw new ApiError(409, "Effect id already exists.");
     }
 
     return this.effectRepository.create({
@@ -43,9 +42,7 @@ class EffectService {
     });
 
     if (!updatedEffect) {
-      const error = new Error("Effect not found.");
-      error.statusCode = 404;
-      throw error;
+      throw new ApiError(404, "Effect not found.");
     }
 
     return updatedEffect;
@@ -55,9 +52,7 @@ class EffectService {
     const deletedEffect = await this.effectRepository.delete(id);
 
     if (!deletedEffect) {
-      const error = new Error("Effect not found.");
-      error.statusCode = 404;
-      throw error;
+      throw new ApiError(404, "Effect not found.");
     }
 
     return deletedEffect;
@@ -65,9 +60,7 @@ class EffectService {
 
   validateEffectPayload(payload) {
     if (!payload.name || !payload.prompt) {
-      const error = new Error("Effect name and prompt are required.");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Effect name and prompt are required.");
     }
   }
 

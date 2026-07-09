@@ -4,7 +4,7 @@ AI Photo Effect App, iOS üzerinden seçilen bir fotoğrafı yapay zeka destekli
 
 - **iOS App:** Kullanıcı fotoğraf seçer, efekti seçer, sonucu görüntüler.
 - **Backend API:** Fotoğrafı alır, seçilen efektin promptunu bulur, AI provider'a gönderir ve sonucu döner.
-- **Admin Panel:** Efekt/prompt yönetimi için ayrılmış web panel klasörüdür. Admin panel sonraki aşamada geliştirilecektir.
+- **Admin Panel:** Efekt/prompt yönetimi için JWT ile korunan React/Vite yönetim panelidir.
 
 ## Mevcut Durum
 
@@ -16,6 +16,8 @@ Bu repo şu anda çalışan bir MVP omurgasına sahiptir:
 - AI provider soyutlanmıştır.
 - Mock AI provider mevcuttur.
 - Replicate AI provider entegre edilmiştir.
+- Admin panel endpointleri JWT tabanlı authentication/authorization ile korunur.
+- Generate ve login endpointlerinde rate limit uygulanır.
 - iOS uygulaması SwiftUI + MVVM yapısı ile backend'e bağlanır.
 - iOS tarafında fotoğraf seçme, efekt listeleme, generate isteği ve sonuç görüntüleme akışı çalışır.
 
@@ -29,6 +31,7 @@ ai-photo-effect-app
 │   │   ├── database
 │   │   ├── middlewares
 │   │   ├── modules
+│   │   │   ├── auth
 │   │   │   ├── effects
 │   │   │   └── generation
 │   │   └── services
@@ -58,11 +61,82 @@ Bu yapı sayesinde endpoint, request/response, iş mantığı ve veri erişimi a
 - `GET /health`
 - `GET /api/effects`
 - `POST /api/generate`
-- `GET /api/generations`
-- `GET /api/admin/effects`
-- `POST /api/admin/effects`
-- `PUT /api/admin/effects/:id`
-- `DELETE /api/admin/effects/:id`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/generations` (admin)
+- `GET /api/admin/effects` (admin)
+- `POST /api/admin/effects` (admin)
+- `PUT /api/admin/effects/:id` (admin)
+- `DELETE /api/admin/effects/:id` (admin)
+
+### Authentication / Authorization
+
+Admin panel JWT tabanlı authentication kullanır. `POST /api/auth/login` başarılı olursa token döner; admin panel bu token'ı `Authorization: Bearer <token>` header'ı ile sonraki isteklerde gönderir.
+
+`/api/effects` ve `/api/generate` public kalır. `/api/admin/effects` ve `/api/generations` endpointleri `requireAuth` ve `requireAdmin` middleware'leri ile korunur.
+
+Admin hesabı `npm run db:setup` sırasında `.env` içindeki `ADMIN_EMAIL` ve `ADMIN_PASSWORD` değerlerinden seed edilir.
+
+### Rate Limit
+
+Backend `express-rate-limit` kullanır:
+
+- Genel API limiti: `RATE_LIMIT_MAX`
+- Generate limiti: `GENERATE_RATE_LIMIT_MAX`
+- Login limiti: `LOGIN_RATE_LIMIT_MAX`
+
+Limit aşılırsa API standart formatta `429` döner:
+
+```json
+{
+  "success": false,
+  "message": "Too many requests. Please try again later."
+}
+```
+
+### HTTP Status Codes
+
+API response formatı standarttır:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+Hata formatı:
+
+```json
+{
+  "success": false,
+  "message": "Effect not found."
+}
+```
+
+Kullanılan ana status code'lar:
+
+- `200`: listeleme, güncelleme, silme
+- `201`: generate veya create işlemi
+- `400`: validation hatası
+- `401`: token yok veya geçersiz
+- `403`: admin yetkisi yok veya effect pasif
+- `404`: kayıt veya route bulunamadı
+- `409`: duplicate effect id
+- `429`: rate limit
+- `502`: AI provider hatası
+- `504`: AI provider timeout
+- `500`: beklenmeyen sunucu hatası
+
+### SOLID Principles in this project
+
+Backend katmanlı yapı ile sorumlulukları ayırır:
+
+- Route sadece URL ve middleware eşleştirir.
+- Controller request/response formatını yönetir.
+- Service iş kurallarını taşır.
+- Repository MySQL erişimini soyutlar.
+- AI provider soyutlaması mock ve Replicate provider'larını aynı servis üzerinden kullanmayı sağlar.
 
 ### Backend Kurulum
 
@@ -93,6 +167,19 @@ http://localhost:3001
 ## Environment Ayarları
 
 Backend `.env` dosyasında iki AI modu desteklenir:
+
+Temel güvenlik ve limit ayarları:
+
+```env
+JWT_SECRET=uzun-rastgele-secret
+JWT_EXPIRES_IN=1d
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=guclu-bir-sifre
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=100
+GENERATE_RATE_LIMIT_MAX=5
+LOGIN_RATE_LIMIT_MAX=5
+```
 
 ### Mock Mod
 
@@ -146,6 +233,8 @@ cd backend
 npm run db:setup
 ```
 
+Bu komut `effects`, `generations` ve `admins` tablolarını hazırlar; admin hesabını `.env` değerlerinden oluşturur veya günceller.
+
 ## iOS App
 
 iOS uygulaması mevcut UIKit proje yapısının içine SwiftUI ile eklenmiştir. `SceneDelegate`, SwiftUI `HomeView` ekranını açar.
@@ -193,20 +282,29 @@ http://192.168.1.25:3001
 
 ## Admin Panel
 
-`admin-panel` klasörü admin panel için ayrılmıştır. Sonraki aşamada React + Vite ile geliştirilecektir.
+`admin-panel` React + Vite ile hazırlanmıştır. Login ekranı, dashboard ve efekt yönetimi ekranı içerir. Axios client, JWT token'ı her admin isteğine otomatik ekler; backend `401` dönerse token temizlenir.
 
-Planlanan admin panel özellikleri:
+Admin panel kurulumu:
 
+```bash
+cd admin-panel
+npm install
+npm run dev
+```
+
+Admin panel özellikleri:
+
+- Login
 - Efekt listeleme
 - Efekt ekleme
 - Efekt düzenleme
 - Efekt silme veya pasifleştirme
 - Prompt yönetimi
-- Generate geçmişini görüntüleme
+- Dashboard metrikleri
 
 ## Sonraki Geliştirme Adımları
 
-1. Efekt ve promptların admin panelden yönetilmesi.
+1. Generate geçmişi için admin panelde ayrı ekran eklenmesi.
 2. Daha kaliteli efekt presetleri ve promptların eklenmesi.
 3. Backend deployment: Render veya Railway.
 4. Admin panel deployment: Vercel.
@@ -215,6 +313,7 @@ Planlanan admin panel özellikleri:
 
 - `backend/.env` GitHub'a yüklenmemelidir.
 - Replicate token veya başka API anahtarları commit edilmemelidir.
+- `JWT_SECRET` ve `ADMIN_PASSWORD` production ortamında güçlü ve tahmin edilemez olmalıdır.
 - `node_modules` ve upload edilen görseller repo dışında tutulur.
 
 ## Komut Özeti
