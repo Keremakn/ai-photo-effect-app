@@ -13,7 +13,11 @@ class GenerationService {
     return this.generationRepository.findAll();
   }
 
-  async generate({ imageFile, effectId }) {
+  async getGenerationsForUser(userId) {
+    return this.generationRepository.findByUserId(userId);
+  }
+
+  async generate({ imageFile, effectId, user }) {
     if (!imageFile) {
       throw new ApiError(400, "Image file is required.");
     }
@@ -43,6 +47,7 @@ class GenerationService {
 
     const generation = await this.generationRepository.create({
       id: randomUUID(),
+      userId: user?.id || null,
       effectId: effect.id,
       effectName: effect.name,
       inputImageUrl,

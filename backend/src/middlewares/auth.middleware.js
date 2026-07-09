@@ -4,12 +4,12 @@ const authRepository = require("../modules/auth/auth.repository");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
 
-const requireAuth = asyncHandler(async (req, res, next) => {
+async function resolveUserFromToken(req) {
   const authHeader = req.get("Authorization") || "";
   const [scheme, token] = authHeader.split(" ");
 
   if (scheme !== "Bearer" || !token) {
-    throw new ApiError(401, "Authorization token is required.");
+    return null;
   }
 
   let payload;
@@ -20,29 +20,44 @@ const requireAuth = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token.");
   }
 
-  const admin = await authRepository.findById(payload.sub);
+  const user = await authRepository.findById(payload.sub);
 
-  if (!admin) {
-    throw new ApiError(401, "Admin account not found.");
+  if (!user) {
+    throw new ApiError(401, "User account not found.");
   }
 
-  req.admin = {
-    id: admin.id,
-    email: admin.email,
-    role: admin.role,
-    createdAt: admin.createdAt,
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
   };
+}
+
+const requireAuth = asyncHandler(async (req, res, next) => {
+  const user = await resolveUserFromToken(req);
+
+  if (!user) {
+    throw new ApiError(401, "Authorization token is required.");
+  }
+
+  req.user = user;
 
   next();
 });
 
+const optionalAuth = asyncHandler(async (req, res, next) => {
+  req.user = await resolveUserFromToken(req);
+  next();
+});
+
 function requireAdmin(req, res, next) {
-  if (!req.admin) {
+  if (!req.user) {
     next(new ApiError(401, "Authorization token is required."));
     return;
   }
 
-  if (req.admin.role !== "admin") {
+  if (req.user.role !== "admin") {
     next(new ApiError(403, "Admin authorization is required."));
     return;
   }
@@ -51,6 +66,7 @@ function requireAdmin(req, res, next) {
 }
 
 module.exports = {
+  optionalAuth,
   requireAuth,
   requireAdmin,
 };

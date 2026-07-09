@@ -10,3 +10,13 @@ struct GenerateResult: Decodable {
     let resultImageUrl: String
     let generationId: String?
 }
+
+struct GenerationHistoryItem: Identifiable, Decodable, Equatable {
+    let id: String
+    let effectId: String
+    let effectName: String
+    let inputImageUrl: String
+    let resultImageUrl: String
+    let provider: String
+    let createdAt: String?
+}

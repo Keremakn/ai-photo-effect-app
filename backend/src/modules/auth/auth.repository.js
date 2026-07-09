@@ -1,6 +1,6 @@
 const db = require("../../config/database");
 
-function mapAdmin(row) {
+function mapUser(row) {
   if (!row) {
     return null;
   }
@@ -16,19 +16,50 @@ function mapAdmin(row) {
 
 class AuthRepository {
   async findByEmail(email) {
-    const [rows] = await db.execute("SELECT * FROM admins WHERE email = ? LIMIT 1", [
+    const [rows] = await db.execute("SELECT * FROM users WHERE email = ? LIMIT 1", [
       email,
     ]);
 
-    return mapAdmin(rows[0]);
+    return mapUser(rows[0]);
   }
 
   async findById(id) {
-    const [rows] = await db.execute("SELECT * FROM admins WHERE id = ? LIMIT 1", [
+    const [rows] = await db.execute("SELECT * FROM users WHERE id = ? LIMIT 1", [
       id,
     ]);
 
-    return mapAdmin(rows[0]);
+    return mapUser(rows[0]);
+  }
+
+  async findAll() {
+    const [rows] = await db.execute(
+      "SELECT * FROM users ORDER BY created_at DESC"
+    );
+
+    return rows.map(mapUser);
+  }
+
+  async create(user) {
+    await db.execute(
+      `INSERT INTO users (id, email, password_hash, role)
+       VALUES (?, ?, ?, ?)`,
+      [user.id, user.email, user.passwordHash, user.role]
+    );
+
+    return this.findById(user.id);
+  }
+
+  async updateRole(id, role) {
+    const [result] = await db.execute(
+      "UPDATE users SET role = ? WHERE id = ?",
+      [role, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return null;
+    }
+
+    return this.findById(id);
   }
 }
 

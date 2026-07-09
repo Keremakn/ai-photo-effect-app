@@ -21,6 +21,8 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Select a photo to generate AI effects.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save generated AI photos to your photo library.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Connect to the local backend while testing the app.</string>
 	<key>NSAppTransportSecurity</key>

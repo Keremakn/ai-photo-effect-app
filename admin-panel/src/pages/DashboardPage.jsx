@@ -1,17 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, Database, ToggleRight } from 'lucide-react';
+import { Activity, Database, Image, ToggleRight, Users } from 'lucide-react';
+import { getAdminGenerations, getAdminUsers } from '../api/adminApi.js';
 import { getAdminEffects } from '../api/effectApi.js';
 import { getApiErrorMessage } from '../api/apiClient.js';
 
 export default function DashboardPage() {
   const [effects, setEffects] = useState([]);
+  const [generations, setGenerations] = useState([]);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getAdminEffects()
-      .then(setEffects)
+    Promise.all([getAdminEffects(), getAdminGenerations(), getAdminUsers()])
+      .then(([effectsData, generationsData, usersData]) => {
+        setEffects(effectsData);
+        setGenerations(generationsData);
+        setUsers(usersData);
+      })
       .catch((requestError) => {
         setEffects([]);
+        setGenerations([]);
+        setUsers([]);
         setError(getApiErrorMessage(requestError));
       });
   }, []);
@@ -23,8 +32,10 @@ export default function DashboardPage() {
       total: effects.length,
       active,
       inactive: Math.max(effects.length - active, 0),
+      generations: generations.length,
+      users: users.length,
     };
-  }, [effects]);
+  }, [effects, generations, users]);
 
   return (
     <section className="page-section">
@@ -41,6 +52,8 @@ export default function DashboardPage() {
         <Metric icon={Database} label="Toplam Efekt" value={stats.total} />
         <Metric icon={ToggleRight} label="Aktif Efekt" value={stats.active} />
         <Metric icon={Activity} label="Pasif Efekt" value={stats.inactive} />
+        <Metric icon={Image} label="Üretim Logu" value={stats.generations} />
+        <Metric icon={Users} label="Kullanıcı" value={stats.users} />
       </div>
     </section>
   );

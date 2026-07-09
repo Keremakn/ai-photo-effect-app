@@ -8,8 +8,18 @@ CREATE TABLE IF NOT EXISTS effects (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id CHAR(36) PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'user',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_users_role (role)
+);
+
 CREATE TABLE IF NOT EXISTS generations (
   id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NULL,
   effect_id VARCHAR(80) NOT NULL,
   effect_name VARCHAR(120) NOT NULL,
   input_image_url TEXT NOT NULL,
@@ -17,7 +27,8 @@ CREATE TABLE IF NOT EXISTS generations (
   provider VARCHAR(80) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_generations_created_at (created_at),
-  INDEX idx_generations_effect_id (effect_id)
+  INDEX idx_generations_effect_id (effect_id),
+  INDEX idx_generations_user_id (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS admins (

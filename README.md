@@ -61,9 +61,12 @@ Bu yapı sayesinde endpoint, request/response, iş mantığı ve veri erişimi a
 - `GET /health`
 - `GET /api/effects`
 - `POST /api/generate`
+- `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
-- `GET /api/generations` (admin)
+- `GET /api/generations/me` (login user)
+- `GET /api/admin/generations` (admin)
+- `GET /api/admin/users` (admin)
 - `GET /api/admin/effects` (admin)
 - `POST /api/admin/effects` (admin)
 - `PUT /api/admin/effects/:id` (admin)
@@ -71,11 +74,15 @@ Bu yapı sayesinde endpoint, request/response, iş mantığı ve veri erişimi a
 
 ### Authentication / Authorization
 
-Admin panel JWT tabanlı authentication kullanır. `POST /api/auth/login` başarılı olursa token döner; admin panel bu token'ı `Authorization: Bearer <token>` header'ı ile sonraki isteklerde gönderir.
+Auth sistemi `users` tablosu ve `role` alanı üzerinden çalışır. Şifreler database'e düz metin olarak yazılmaz; `bcrypt` ile hashlenmiş `password_hash` değeri tutulur.
 
-`/api/effects` ve `/api/generate` public kalır. `/api/admin/effects` ve `/api/generations` endpointleri `requireAuth` ve `requireAdmin` middleware'leri ile korunur.
+`POST /api/auth/login` başarılı olursa JWT token döner. Client bu token'ı `Authorization: Bearer <token>` header'ı ile sonraki isteklerde gönderir.
 
-Admin hesabı `npm run db:setup` sırasında `.env` içindeki `ADMIN_EMAIL` ve `ADMIN_PASSWORD` değerlerinden seed edilir.
+Normal kullanıcılar `user` rolüyle kendi üretim geçmişlerini `GET /api/generations/me` üzerinden görebilir. Admin rolündeki kullanıcılar `/api/admin/effects`, `/api/admin/generations` ve `/api/admin/users` endpointleriyle tüm veriye erişebilir.
+
+`/api/effects` public kalır. `/api/generate` geriye uyumluluk için token olmadan da çalışır; token gönderilirse generation kaydı ilgili kullanıcıya bağlanır.
+
+İlk admin hesabı `npm run db:setup` sırasında `.env` içindeki `ADMIN_EMAIL` ve `ADMIN_PASSWORD` değerlerinden seed edilir. Bu değerler sadece bootstrap içindir; login runtime'da database'deki `users` kaydından çalışır.
 
 ### Rate Limit
 
@@ -233,7 +240,7 @@ cd backend
 npm run db:setup
 ```
 
-Bu komut `effects`, `generations` ve `admins` tablolarını hazırlar; admin hesabını `.env` değerlerinden oluşturur veya günceller.
+Bu komut `effects`, `generations`, `users` ve eski kurulumlarla uyumluluk için `admins` tablolarını hazırlar; bootstrap admin hesabını `.env` değerlerinden `users` tablosuna oluşturur veya günceller.
 
 ## iOS App
 
@@ -247,24 +254,30 @@ View -> ViewModel -> Service -> Backend
 
 Ana dosyalar:
 
+- `Features/Auth/AuthView.swift`
 - `Features/Home/HomeView.swift`
 - `Features/Home/HomeViewModel.swift`
 - `Features/ImagePicker/PhotoPickerView.swift`
 - `Features/Effects/EffectSelectionView.swift`
 - `Features/Generation/ProcessingView.swift`
 - `Features/Result/ResultView.swift`
+- `Core/Services/AuthAPIService.swift`
+- `Core/Services/AuthSessionStore.swift`
 - `Core/Services/EffectAPIService.swift`
 - `Core/Services/GenerationAPIService.swift`
+- `Core/Services/PhotoLibrarySaveService.swift`
 
 ### iOS Akışı
 
-1. Kullanıcı fotoğraf seçer.
+1. Kullanıcı login olur veya hesap oluşturur.
 2. Uygulama backend'den efekt listesini çeker.
-3. Kullanıcı efekt seçer.
-4. Generate butonuna basar.
-5. Fotoğraf ve `effectId`, backend'e multipart/form-data olarak gider.
-6. Backend AI provider üzerinden sonucu üretir.
-7. iOS uygulaması dönen `resultImageUrl` değerini ekranda gösterir.
+3. Kullanıcı fotoğraf seçer.
+4. Kullanıcı efekt seçer.
+5. Generate butonuna basar.
+6. Fotoğraf, `effectId` ve JWT token backend'e gider.
+7. Backend generation kaydını kullanıcıya bağlar.
+8. iOS uygulaması dönen `resultImageUrl` değerini ekranda gösterir.
+9. Kullanıcı sonucu Photos galerisine kaydedebilir.
 
 ### Simülatör ve Gerçek Cihaz
 
@@ -295,6 +308,11 @@ npm run dev
 Admin panel özellikleri:
 
 - Login
+- Kullanıcı listeleme
+- Tüm generation loglarını görüntüleme
+- Kullanıcı ve log tablolarında arama
+- Tablo başlıklarına tıklayarak sıralama
+- Sabit sol menü ve sabit hesap/çıkış alanı
 - Efekt listeleme
 - Efekt ekleme
 - Efekt düzenleme
@@ -304,10 +322,11 @@ Admin panel özellikleri:
 
 ## Sonraki Geliştirme Adımları
 
-1. Generate geçmişi için admin panelde ayrı ekran eklenmesi.
-2. Daha kaliteli efekt presetleri ve promptların eklenmesi.
-3. Backend deployment: Render veya Railway.
-4. Admin panel deployment: Vercel.
+1. iOS'ta kullanıcıya kendi generation geçmişini gösteren ekran eklenmesi.
+2. Auth token saklamayı UserDefaults yerine Keychain'e taşıma.
+3. Daha kaliteli efekt presetleri ve promptların eklenmesi.
+4. Backend deployment: Render veya Railway.
+5. Admin panel deployment: Vercel.
 
 ## Güvenlik Notları
 

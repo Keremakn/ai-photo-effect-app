@@ -1,4 +1,5 @@
-import { Pencil, Power, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowUpDown, Pencil, Power, Search, Trash2 } from 'lucide-react';
 
 export default function EffectTable({
   effects,
@@ -8,22 +9,69 @@ export default function EffectTable({
   onToggle,
   onDelete,
 }) {
+  const [query, setQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+
+  const visibleEffects = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const filteredEffects = normalizedQuery
+      ? effects.filter((effect) => [
+        effect.id,
+        effect.name,
+        effect.prompt,
+        effect.description,
+        effect.isActive ? 'aktif active' : 'pasif inactive',
+      ].join(' ').toLowerCase().includes(normalizedQuery))
+      : effects;
+
+    return [...filteredEffects].sort((first, second) => {
+      const firstValue = getSortValue(first, sortConfig.key);
+      const secondValue = getSortValue(second, sortConfig.key);
+
+      if (firstValue < secondValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+
+      if (firstValue > secondValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+
+      return 0;
+    });
+  }, [effects, query, sortConfig]);
+
+  function handleSort(key) {
+    setSortConfig((currentSort) => ({
+      key,
+      direction: currentSort.key === key && currentSort.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }
+
   return (
     <div className="panel table-panel">
       <div className="panel-header">
         <div>
           <h2>Efektler</h2>
-          <p>{isLoading ? 'Yükleniyor' : `${effects.length} kayıt`}</p>
+          <p>{isLoading ? 'Yükleniyor' : `${visibleEffects.length} kayıt`}</p>
         </div>
+        <label className="table-search">
+          <Search size={16} strokeWidth={2.1} />
+          <input
+            type="search"
+            placeholder="Ara"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
       </div>
 
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Ad</th>
-              <th>Durum</th>
-              <th>Prompt</th>
+              <th><SortButton label="Ad" sortKey="name" sortConfig={sortConfig} onSort={handleSort} /></th>
+              <th><SortButton label="Durum" sortKey="isActive" sortConfig={sortConfig} onSort={handleSort} /></th>
+              <th><SortButton label="Prompt" sortKey="prompt" sortConfig={sortConfig} onSort={handleSort} /></th>
               <th aria-label="İşlemler"></th>
             </tr>
           </thead>
@@ -34,13 +82,13 @@ export default function EffectTable({
               </tr>
             )}
 
-            {!isLoading && effects.length === 0 && (
+            {!isLoading && visibleEffects.length === 0 && (
               <tr>
                 <td colSpan="4" className="empty-cell">Kayıt yok</td>
               </tr>
             )}
 
-            {!isLoading && effects.map((effect) => (
+            {!isLoading && visibleEffects.map((effect) => (
               <tr key={effect.id} className={selectedEffectId === effect.id ? 'selected-row' : ''}>
                 <td>
                   <strong>{effect.name}</strong>
@@ -75,4 +123,24 @@ export default function EffectTable({
       </div>
     </div>
   );
+}
+
+function SortButton({ label, sortKey, sortConfig, onSort }) {
+  const isActive = sortConfig.key === sortKey;
+
+  return (
+    <button className={isActive ? 'sort-button active' : 'sort-button'} type="button" onClick={() => onSort(sortKey)}>
+      {label}
+      <ArrowUpDown size={14} strokeWidth={2.2} />
+      {isActive && <span>{sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'}</span>}
+    </button>
+  );
+}
+
+function getSortValue(effect, key) {
+  if (key === 'isActive') {
+    return effect.isActive ? 1 : 0;
+  }
+
+  return String(effect[key] ?? '').toLowerCase();
 }

@@ -6,7 +6,7 @@ export async function loginAdmin(credentials) {
 
   localStorage.setItem(ADMIN_TOKEN_KEY, authResult.token);
 
-  return authResult.admin;
+  return authResult.user;
 }
 
 export async function getCurrentAdmin() {

@@ -3,6 +3,9 @@ const db = require("../../config/database");
 function mapGeneration(row) {
   return {
     id: row.id,
+    userId: row.user_id,
+    userEmail: row.user_email || null,
+    userRole: row.user_role || null,
     effectId: row.effect_id,
     effectName: row.effect_name,
     inputImageUrl: row.input_image_url,
@@ -15,7 +18,29 @@ function mapGeneration(row) {
 class GenerationRepository {
   async findAll() {
     const [rows] = await db.execute(
-      "SELECT * FROM generations ORDER BY created_at DESC"
+      `SELECT
+        generations.*,
+        users.email AS user_email,
+        users.role AS user_role
+       FROM generations
+       LEFT JOIN users ON users.id = generations.user_id
+       ORDER BY generations.created_at DESC`
+    );
+
+    return rows.map(mapGeneration);
+  }
+
+  async findByUserId(userId) {
+    const [rows] = await db.execute(
+      `SELECT
+        generations.*,
+        users.email AS user_email,
+        users.role AS user_role
+       FROM generations
+       LEFT JOIN users ON users.id = generations.user_id
+       WHERE generations.user_id = ?
+       ORDER BY generations.created_at DESC`,
+      [userId]
     );
 
     return rows.map(mapGeneration);
@@ -24,10 +49,11 @@ class GenerationRepository {
   async create(generation) {
     await db.execute(
       `INSERT INTO generations
-        (id, effect_id, effect_name, input_image_url, result_image_url, provider)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+        (id, user_id, effect_id, effect_name, input_image_url, result_image_url, provider)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         generation.id,
+        generation.userId,
         generation.effectId,
         generation.effectName,
         generation.inputImageUrl,
@@ -36,9 +62,17 @@ class GenerationRepository {
       ]
     );
 
-    const [rows] = await db.execute("SELECT * FROM generations WHERE id = ? LIMIT 1", [
-      generation.id,
-    ]);
+    const [rows] = await db.execute(
+      `SELECT
+        generations.*,
+        users.email AS user_email,
+        users.role AS user_role
+       FROM generations
+       LEFT JOIN users ON users.id = generations.user_id
+       WHERE generations.id = ?
+       LIMIT 1`,
+      [generation.id]
+    );
 
     return mapGeneration(rows[0]);
   }

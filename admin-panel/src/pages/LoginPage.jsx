@@ -15,11 +15,11 @@ export default function LoginPage({ onLogin }) {
     setIsSubmitting(true);
 
     try {
-      const admin = await loginAdmin({
+      const user = await loginAdmin({
         email: email.trim(),
         password,
       });
-      onLogin(admin);
+      onLogin(user);
     } catch (requestError) {
       setError(getApiErrorMessage(requestError));
     } finally {

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ResultView: View {
     let resultImageUrl: URL
+    let isSaving: Bool
+    let onSave: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -29,6 +31,14 @@ struct ResultView: View {
                     EmptyView()
                 }
             }
+
+            Button(action: onSave) {
+                Label(isSaving ? "Saving" : "Save to Photos", systemImage: "square.and.arrow.down")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .disabled(isSaving)
         }
     }
 }
